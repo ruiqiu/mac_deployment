@@ -1,0 +1,68 @@
+#!/bin/bash
+
+# Mac Automation Script
+# Rui Qiu
+# 06222015
+
+RunAsRoot()
+
+{
+
+        ##  Pass in the full path to the executable as $1
+
+        if [[ "${USER}" != "root" ]] ; then
+
+                echo
+
+                echo "***  This application must be run as root.  Please authenticate below.  ***"
+
+                echo
+
+                sudo "${1}" && exit 0
+
+        fi
+
+}
+
+
+
+
+RunAsRoot "${0}"
+
+# If machine is already bound, exit the script
+
+check4AD=`/usr/bin/dscl localhost -list . | grep "Active Directory"`
+
+if [ "${check4AD}" = "Active Directory" ]; then
+
+	echo "Computer is already bound to Active Directory.. \n Exiting script... "; exit 1
+
+fi
+
+
+
+# Find the absolute script current path
+path=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+
+
+sudo sh ${path}/join.sh
+sudo sh ${path}/join2.sh
+
+/usr/sbin/installer -dumplog -verbose -pkg ${path}/esetv8.mpkg -target /
+/usr/sbin/installer -dumplog -verbose -pkg ${path}/sccm.mpkg -target /
+
+
+read -n 1 -p "Would you like to exit, reboot, or shutdown? (E/r/s) " ans;
+
+case $ans in
+    r|R)
+        sudo reboot;;
+    s|S)
+        sudo poweroff;;
+    *)
+        exit;;
+esac
+
+
+exit 0
